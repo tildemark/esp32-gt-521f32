@@ -35,31 +35,28 @@
    display.clearDisplay();
    display.setTextColor(SH110X_WHITE);
  
-   // 📅 Display Current Date
-   display.setCursor(0, 10);
-   display.setTextSize(2);
-   display.print(getCurrentTime());
+   display.setCursor(0, 0);
+   display.setTextSize(1);  
+   display.print(getCurrentDate(false));  // Use compact date format
+   display.print(" ");
+   display.print(getCurrentTime(false));  // Use compact time format
  
-   // 🕒 Display Current Time
-   display.setCursor(0, 40);
-   display.setTextSize(1);
-   display.print(getCurrentDate());
- 
-   // 📡 Show WiFi or Disconnected Icon
-   if (isConnectedToInternet()) {
-     drawWiFiIcon(110, 0); // WiFi Connected
-   } else {
-     drawDisconnectedIcon(110, 0); // No Internet
-   }
- 
-    // 🔍 Show Fingerprint Sensor Status (Top-Right, Left Side)
-    if (fingerprintAvailable) {
-        drawFingerprintIcon(90, 0);  // Fingerprint detected
-    } else {
-        drawFingerprintErrorIcon(90, 0);  // Fingerprint missing
-    }
+  if (fingerprintAvailable) {
+    drawFingerprintIcon(100, 0);
+  } else {
+    drawFingerprintErrorIcon(100, 0);
+  }
 
-   display.display();
+  if (isConnectedToInternet()) {
+    drawWiFiIcon(115, -1);
+  } else {
+    drawDisconnectedIcon(115, -1);
+  }
+
+  //display.fillRect(0, 10, 128, 54, SH110X_WHITE);
+  display.drawRect(0, 10, 128, 54, SH110X_WHITE);  // (X, Y, Width, Height, Color)
+
+  display.display();
  }
  
  /**
@@ -69,11 +66,16 @@
   * @param x X position on the screen
   * @param y Y position on the screen
   */
- void drawWiFiIcon(int x, int y) {
-    display.fillCircle(x + 5, y + 7, 2, SH110X_WHITE);  // Center dot
-    display.drawLine(x, y + 5, x + 10, y + 5, SH110X_WHITE);  // Small arc
-    display.drawLine(x - 2, y + 3, x + 12, y + 3, SH110X_WHITE);  // Medium arc
-    display.drawLine(x - 4, y + 1, x + 14, y + 1, SH110X_WHITE);  // Large arc
+//  void drawWiFiIcon(int x, int y) {
+//     display.fillCircle(x + 5, y + 7, 2, SH110X_WHITE);  // Center dot
+//     display.drawLine(x, y + 5, x + 10, y + 5, SH110X_WHITE);  // Small arc
+//     display.drawLine(x - 2, y + 3, x + 12, y + 3, SH110X_WHITE);  // Medium arc
+//     display.drawLine(x - 4, y + 1, x + 14, y + 1, SH110X_WHITE);  // Large arc
+//   }
+  void drawWiFiIcon(int x, int y) {
+    display.fillCircle(x + 3, y + 5, 1, SH110X_WHITE);  // Smaller dot
+    display.drawLine(x, y + 3, x + 6, y + 3, SH110X_WHITE);  // Small arc
+    display.drawLine(x - 2, y + 1, x + 8, y + 1, SH110X_WHITE);  // Medium arc
   }
  
  /**
@@ -89,14 +91,14 @@
  }
  
  void drawFingerprintIcon(int x, int y) {
-    display.drawCircle(x + 5, y + 7, 4, SH110X_WHITE);  // Outer fingerprint ring
-    display.drawPixel(x + 5, y + 7, SH110X_WHITE);  // Center dot
-    display.drawLine(x + 2, y + 4, x + 8, y + 4, SH110X_WHITE);  // Top line
-    display.drawLine(x + 2, y + 10, x + 8, y + 10, SH110X_WHITE);  // Bottom line
-  }
-
+  display.drawCircle(x + 3, y + 6, 3, SH110X_WHITE);  // Outer circle
+  display.drawPixel(x + 3, y + 6, SH110X_WHITE);  // Center dot
+  display.drawLine(x + 1, y + 3, x + 5, y + 3, SH110X_WHITE);  // Line inside fingerprint
+  display.drawLine(x + 1, y + 9, x + 5, y + 9, SH110X_WHITE);  // Bottom line
+}
 void drawFingerprintErrorIcon(int x, int y) {
-    display.drawCircle(x + 3, y + 6, 3, SH110X_WHITE);  // Outer circle
-    display.drawLine(x, y + 3, x + 6, y + 9, SH110X_WHITE);  // Cross line
-    display.drawLine(x + 6, y + 3, x, y + 9, SH110X_WHITE);  // Reverse cross line
+  y -= 2;  // ✅ Raise the icon slightly higher
+  display.drawCircle(x + 3, y + 6, 3, SH110X_WHITE);  // Outer circle
+  display.drawLine(x, y + 3, x + 6, y + 9, SH110X_WHITE);  // Cross line
+  display.drawLine(x + 6, y + 3, x, y + 9, SH110X_WHITE);  // Reverse cross line
 }

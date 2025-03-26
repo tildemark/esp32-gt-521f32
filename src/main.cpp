@@ -17,15 +17,13 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  Serial.println("\nESP32 MAC Address: " + WiFi.macAddress());
-
   // Attempt to connect to WiFi
   if (!connectToWiFi()) {
-    Serial.println("No WiFi connection available.");
+    Serial.println("❌📶 No WiFi connection available.");
     return;
   }
 
-  Serial.println(isConnectedToInternet() ? "Internet is available." : "No internet access.");
+  Serial.println(isConnectedToInternet() ? "✅ Internet is available." : "❌ No internet access.");
   
   // Initialize OLED display
   initDisplay();
@@ -50,7 +48,6 @@ void loop() {
 
   // ✅ Check if fingerprint sensor is available before scanning
   if (!fingerprintAvailable) {
-    Serial.println("⚠️ Fingerprint sensor is missing. Skipping scan.");
     delay(2000);
     return;  // Exit loop iteration early, but continue running the app
   }

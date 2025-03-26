@@ -18,8 +18,8 @@
  extern NTPClient timeClient;
  
  // Function Declarations
- String getCurrentTime();
- String getCurrentDate();
+ String getCurrentTime(bool);
+ String getCurrentDate(bool);
  
  #endif
  
