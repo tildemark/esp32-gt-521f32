@@ -5,6 +5,12 @@
 #include <Adafruit_GFX.h> // Includes the Adafruit GFX library for graphics functions
 #include <Adafruit_SH110X.h> // Includes the Adafruit SH110X library for the OLED display driver
 
+// required for time
+#include <WiFi.h>
+#include <WiFiUdp.h>
+#include <NTPClient.h>
+#include <ESP32Ping.h>  // Add this library for better internet checking
+
 // Defines the screen dimensions
 #define SCREEN_WIDTH 128  // OLED display width in pixels
 #define SCREEN_HEIGHT 64   // OLED display height in pixels
@@ -19,61 +25,40 @@
 // - reset pin (not used here, so -1)
 Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
-// required for time
-#include <WiFi.h>
-#include <WiFiUdp.h>
-#include <NTPClient.h>
-
-// Wi-Fi credentials
-#define WIFI_SSID "AvegaBros_WIFI"
-#define WIFI_PASSWORD ""
-const char* ssid = "AvegaBros_WIFI";
-const char* password = "";
-WiFiClient client;
+// WiFi Networks (Multiple SSIDs)
+const char* wifiNetworks[][2] = {
+  {"AvegaBros_WIFI", ""},
+  {"Home_WiFi", "home_password"},
+  {"Mobile_Hotspot", "hotspot_password"}
+};
+const int numNetworks = sizeof(wifiNetworks) / sizeof(wifiNetworks[0]);
 
 // NTP setup
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "time.google.com", 8 * 3600, 60000);
 
 // function declarations
+// Function Declarations
+bool connectToWiFi();
+bool isConnectedToWiFi();
+bool isConnectedToInternet();
 String getCurrentTime();
 String getCurrentDate();
 void displayStatus();
-bool isConnectedToWiFi();
-bool isConnectedToInternet();
 
 void setup() {
   Serial.begin(115200);  // Initializes serial communication at 115200 baud rate
   delay(1000); // Give serial monitor time to open
 
   // get the mac address
-  Serial.println("ESP32 MAC Address:");
-  Serial.println(WiFi.macAddress());
+  Serial.println("\nESP32 MAC Address: " + WiFi.macAddress());
 
-  Serial.print("Connecting to : ");
-  Serial.print(WIFI_SSID);
-  // Connect to Wi-Fi
-  WiFi.begin(ssid, password);
-  int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 20) { // Try for 10 seconds
-    delay(500);
-    Serial.print(".");
-    attempts++;
+  if (!connectToWiFi()) {
+    Serial.println("No WiFi connection available.");
+    return;
   }
-  if (isConnectedToWiFi()) {
-    Serial.println("\nWiFi Connected!");
-    Serial.print("IP Address: ");
-    Serial.println(WiFi.localIP());
-
-    Serial.println("Checking internet access...");
-    if (isConnectedToInternet()) {
-      Serial.println("Internet is available.");
-    } else {
-      Serial.println("No internet access.");
-    }
-  } else {
-    Serial.println("\nFailed to connect to WiFi.");
-  }
+  Serial.println("Checking internet access...");
+  Serial.println(isConnectedToInternet() ? "Internet is available." : "No internet access.");
 
   // Initializes the OLED display
   // The parameters are:
@@ -81,8 +66,7 @@ void setup() {
   // - reset (true/false)
   if (!display.begin(OLED_ADDR, true)) {
     Serial.println("SH110X OLED not found"); // Prints an error message if the display doesn't initialize
-    while (1)  // Infinite loop to stop the program if the display is not found
-      ;
+    return;
   }
   display.display(); // Clears the display and shows the Adafruit splashscreen
   delay(2000);       // Waits for 2000 milliseconds (2 seconds)
@@ -156,18 +140,45 @@ String getCurrentDate() {
   return String(year) + "-" + monthStr + "-" + dayStr;
 }
 
+// 📶 Connect to WiFi (Tries multiple SSIDs)
+bool connectToWiFi() {
+  Serial.println("Scanning for known WiFi networks...");
+
+  for (int i = 0; i < numNetworks; i++) {
+    const char* ssid = wifiNetworks[i][0];
+    const char* password = wifiNetworks[i][1];
+
+    Serial.print("Trying to connect to: ");
+    Serial.println(ssid);
+
+    WiFi.begin(ssid, password);
+    int attempts = 0;
+    
+    while (!isConnectedToWiFi() && attempts < 20) {  // Try for 10 seconds
+      delay(500);
+      Serial.print(".");
+      attempts++;
+    }
+
+    if (isConnectedToWiFi()) {
+      Serial.println("\nConnected to " + String(ssid));
+      Serial.print("IP Address: ");
+      Serial.println(WiFi.localIP());
+      return true;  // Stop trying once connected
+    } else {
+      Serial.println("\nFailed to connect to " + String(ssid));
+    }
+  }
+
+  return false;  // No networks available
+}
+
+// 📡 Check if WiFi is connected
 bool isConnectedToWiFi() {
   return WiFi.status() == WL_CONNECTED;
 }
 
+// 🌎 Check if internet is available (Uses Google's DNS)
 bool isConnectedToInternet() {
-  if (!isConnectedToWiFi()) return false;
-
-  // Try to connect to a known reliable server (Google DNS)
-  WiFiClient client;
-  if (client.connect("google.com", 80)) {
-    client.stop();
-    return true;
-  }
-  return false;
+  return isConnectedToWiFi() && Ping.ping("8.8.8.8");
 }
