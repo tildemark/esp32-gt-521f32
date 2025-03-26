@@ -2,3 +2,8 @@
 version = 1
 firmware = '.pio\build\esp32dev\firmware.bin'
 elf = '.pio\build\esp32dev\firmware.elf'
+
+[[uart]]
+baud = 57600  # Set baud rate for fingerprint sensor
+tx = 17       # TX pin (to sensor RX)
+rx = 16       # RX pin (to sensor TX)
